@@ -1,0 +1,17 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Logs
+*.log
+
+# Go
+bin/
+dist/
+tmp/
+coverage.out
+
+# Docker / local
+.env
