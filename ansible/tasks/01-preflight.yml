@@ -1,0 +1,20 @@
+---
+- name: Validar sistema operacional Debian/Ubuntu
+  ansible.builtin.assert:
+    that:
+      - ansible_os_family == "Debian"
+    fail_msg: "Este playbook foi preparado para ambientes Debian/Ubuntu."
+
+- name: Atualizar cache do APT
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Instalar dependências básicas
+  ansible.builtin.apt:
+    name:
+      - ca-certificates
+      - curl
+      - gnupg
+      - git
+    state: present

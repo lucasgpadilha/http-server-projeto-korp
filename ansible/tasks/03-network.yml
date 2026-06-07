@@ -1,0 +1,10 @@
+---
+- name: Verificar se a rede Docker já existe
+  ansible.builtin.command: "docker network inspect {{ docker_network_name }}"
+  register: docker_network_check
+  failed_when: false
+  changed_when: false
+
+- name: Criar rede Docker bridge
+  ansible.builtin.command: "docker network create --driver bridge {{ docker_network_name }}"
+  when: docker_network_check.rc != 0

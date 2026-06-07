@@ -1,0 +1,23 @@
+---
+- name: Provisionar ambiente do desafio Projeto Korp
+  hosts: all
+  become: true
+
+  vars_files:
+    - vars.yml
+
+  tasks:
+    - name: Executar validações iniciais
+      ansible.builtin.import_tasks: tasks/01-preflight.yml
+
+    - name: Preparar Docker e Docker Compose
+      ansible.builtin.import_tasks: tasks/02-docker.yml
+
+    - name: Configurar rede Docker
+      ansible.builtin.import_tasks: tasks/03-network.yml
+
+    - name: Buildar e subir containers
+      ansible.builtin.import_tasks: tasks/04-compose.yml
+
+    - name: Validar funcionamento do ambiente
+      ansible.builtin.import_tasks: tasks/05-validation.yml

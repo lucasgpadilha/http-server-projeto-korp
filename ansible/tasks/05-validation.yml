@@ -1,0 +1,33 @@
+---
+- name: Aguardar serviço responder via NGINX
+  ansible.builtin.uri:
+    url: http://localhost/projeto-korp
+    method: GET
+    status_code: 200
+    return_content: true
+  register: service_response
+  retries: 15
+  delay: 2
+  until: service_response.status == 200
+
+- name: Exibir resposta da aplicação no console
+  ansible.builtin.debug:
+    var: service_response.json
+
+- name: Validar Prometheus
+  ansible.builtin.uri:
+    url: http://localhost:9090/api/v1/targets
+    method: GET
+    status_code: 200
+  register: prometheus_response
+  retries: 10
+  delay: 2
+  until: prometheus_response.status == 200
+
+- name: Mostrar URLs de acesso
+  ansible.builtin.debug:
+    msg:
+      - "Aplicação: http://localhost/projeto-korp"
+      - "Prometheus: http://localhost:9090"
+      - "Grafana: http://localhost:3000"
+      - "Login Grafana: admin / admin"

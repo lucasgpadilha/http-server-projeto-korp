@@ -1,0 +1,85 @@
+---
+- name: Verificar se Docker já está disponível
+  ansible.builtin.command: docker version
+  register: docker_check
+  failed_when: false
+  changed_when: false
+
+- name: Verificar se Docker Compose V2 já está disponível
+  ansible.builtin.command: docker compose version
+  register: docker_compose_check
+  failed_when: false
+  changed_when: false
+
+- name: Definir arquitetura para repositório Docker
+  ansible.builtin.set_fact:
+    docker_arch: "{{ docker_arch_map[ansible_architecture] | default(ansible_architecture) }}"
+  vars:
+    docker_arch_map:
+      x86_64: amd64
+      aarch64: arm64
+      armv7l: armhf
+      s390x: s390x
+      ppc64le: ppc64el
+
+- name: Instalar Docker Engine oficial quando necessário
+  when: docker_check.rc != 0 or docker_compose_check.rc != 0
+  block:
+    - name: Remover pacotes conflitantes do Docker
+      ansible.builtin.apt:
+        name:
+          - docker.io
+          - docker-doc
+          - docker-compose
+          - docker-compose-v2
+          - podman-docker
+          - containerd
+          - runc
+        state: absent
+
+    - name: Criar diretório de keyrings do APT
+      ansible.builtin.file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: "0755"
+
+    - name: Baixar chave GPG oficial do Docker
+      ansible.builtin.get_url:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        dest: /etc/apt/keyrings/docker.asc
+        mode: "0644"
+
+    - name: Adicionar repositório oficial do Docker
+      ansible.builtin.apt_repository:
+        repo: "deb [arch={{ docker_arch }} signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+        filename: docker
+        state: present
+        update_cache: true
+
+    - name: Instalar Docker Engine e Compose Plugin
+      ansible.builtin.apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-buildx-plugin
+          - docker-compose-plugin
+        state: present
+
+- name: Garantir serviço Docker ativo quando houver systemd
+  ansible.builtin.service:
+    name: docker
+    state: started
+    enabled: true
+  when: ansible_service_mgr == "systemd"
+
+- name: Validar acesso ao Docker
+  ansible.builtin.command: docker info
+  changed_when: false
+
+- name: Adicionar usuário atual ao grupo docker
+  ansible.builtin.user:
+    name: "{{ deploy_user }}"
+    groups: docker
+    append: true
+  when: deploy_user != "root"

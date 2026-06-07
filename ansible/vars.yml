@@ -1,0 +1,5 @@
+---
+project_name: http-server-projeto-korp
+docker_network_name: korp_bridge
+project_dir: "{{ playbook_dir }}/.."
+deploy_user: "{{ ansible_env.SUDO_USER | default(ansible_user_id) }}"
